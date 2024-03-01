@@ -1,5 +1,6 @@
 package ru.ivan.instazoo.services.impl;
 
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -9,7 +10,7 @@ import ru.ivan.instazoo.entities.User;
 import ru.ivan.instazoo.exceptions.AccessDeniedException;
 import ru.ivan.instazoo.exceptions.PostNotFoundException;
 import ru.ivan.instazoo.exceptions.UserNotFoundException;
-import ru.ivan.instazoo.mappers.PostMapperImpl;
+import ru.ivan.instazoo.mappers.PostMapper;
 import ru.ivan.instazoo.repositories.PostRepository;
 import ru.ivan.instazoo.repositories.UserRepository;
 import ru.ivan.instazoo.services.PostService;
@@ -23,27 +24,26 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
-    private final PostMapperImpl postMapper;
     private final UserRepository userRepository;
 
     @Override
     public List<PostDTO> getAllPosts() {
         return postRepository.findAll().stream()
-                .map(postMapper::toPostDTO)
+                .map(PostMapper.INSTANCE::toPostDTO)
                 .collect(Collectors.toList());
     }
     @Override
     public PostDTO postById(Long id) throws PostNotFoundException {
         Post post = getPostEntityById(id);
-        return postMapper.toPostDTO(post);
+        return PostMapper.INSTANCE.toPostDTO(post);
     }
 
     @Override
     public PostDTO save(PostDTO postDTO, Principal principal) throws UserNotFoundException{
         User userByPrincipal = getUserByPrincipal(principal);
-        Post postToDb = postMapper.toPost(postDTO);
+        Post postToDb = PostMapper.INSTANCE.toPost(postDTO);
         postToDb.setUser(userByPrincipal);
-        return postMapper.toPostDTO(postRepository.save(postToDb));
+        return PostMapper.INSTANCE.toPostDTO(postRepository.save(postToDb));
     }
 
     @Override
@@ -62,7 +62,7 @@ public class PostServiceImpl implements PostService {
 
     private User getUserByPrincipal(Principal principal) throws UserNotFoundException {
         String username = principal.getName();
-        return userRepository.findByUsername(username)
+        return userRepository.findByEmail(username)
                 .orElseThrow(() -> new UserNotFoundException("User with username " + username + " not found"));
     }
 }

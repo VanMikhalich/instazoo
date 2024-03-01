@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
-    private final CommentMapper commentMapper;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
 
@@ -35,16 +34,16 @@ public class CommentServiceImpl implements CommentService {
                 .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + postId));
         return post.getComments()
                 .stream()
-                .map(commentMapper::toCommentDTO)
+                .map(CommentMapper.INSTANCE::toCommentDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public CommentDTO save(CommentDTO commentDTO, Principal principal) throws PostNotFoundException, UserNotFoundException {
         User user = getUserByPrincipal(principal);
-        Comment commentToDb = commentMapper.toComment(commentDTO);
+        Comment commentToDb = CommentMapper.INSTANCE.toComment(commentDTO);
         commentToDb.setUser(user);
-        return commentMapper.toCommentDTO(commentRepository.save(commentToDb));
+        return CommentMapper.INSTANCE.toCommentDTO(commentRepository.save(commentToDb));
     }
 
     @Override
@@ -58,7 +57,7 @@ public class CommentServiceImpl implements CommentService {
 
     private User getUserByPrincipal(Principal principal) throws UserNotFoundException {
         String username = principal.getName();
-        return userRepository.findByUsername(username)
+        return userRepository.findByEmail(username)
                 .orElseThrow(() -> new UserNotFoundException("User with username " + username + " not found"));
     }
 
